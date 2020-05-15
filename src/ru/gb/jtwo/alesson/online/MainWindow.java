@@ -2,6 +2,8 @@ package ru.gb.jtwo.alesson.online;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class MainWindow extends JFrame {
 
@@ -26,6 +28,32 @@ public class MainWindow extends JFrame {
         setBounds(POS_X, POS_Y, WINDOW_WIDTH, WINDOW_HEIGHT);
         setResizable(false);
         MainCanvas canvas = new MainCanvas(this);
+        canvas.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int button = e.getButton();
+                Sprite[] newSprites;
+                switch (button) {
+                    case MouseEvent.BUTTON1: //левая
+                        //добавляем кружок
+                        newSprites = new Sprite[sprites.length + 1];
+                        for (int i = 0; i < sprites.length; i++) {
+                            newSprites[i] = sprites[i];
+                        }
+                        newSprites[sprites.length] = new Ball();
+                        sprites = newSprites;
+                        break;
+                    case MouseEvent.BUTTON3: //правая
+                        //удаляем кружок (последний)
+                        newSprites = new Sprite[sprites.length - 1];
+                        for (int i = 0; i < newSprites.length; i++) {
+                            newSprites[i] = sprites[i];
+                        }
+                        sprites = newSprites;
+                        break;
+                }
+            }
+        });
         initApplication();
         add(canvas);
         setTitle("Circles");
