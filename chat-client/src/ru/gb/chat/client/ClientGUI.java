@@ -8,12 +8,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.LinkedList;
 
 public class ClientGUI extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler, SocketThreadListener {
 
@@ -82,8 +82,31 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         add(scrollUser, BorderLayout.EAST);
         add(panelTop, BorderLayout.NORTH);
         add(panelBottom, BorderLayout.SOUTH);
+        loadRecentMessages();
 
         setVisible(true);
+    }
+
+    private void loadRecentMessages() {
+        try (BufferedReader r = new BufferedReader(new FileReader("log.txt"))) {
+            LinkedList<String> lines = new LinkedList<>();
+            String line;
+            while ((line = r.readLine()) != null) {
+                lines.addLast(line);
+                if (lines.size() > 100) {
+                    lines.removeFirst();
+                }
+            }
+            for (String s : lines) {
+                log.append(s + "\n");
+            }
+            log.setCaretPosition(log.getDocument().getLength());
+        } catch (IOException e) {
+            if (!shownIoErrors) {
+                shownIoErrors = true;
+                showException(Thread.currentThread(), e);
+            }
+        }
     }
 
 
@@ -121,9 +144,10 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         socketThread.sendMessage(Library.getTypeBcastClient(msg));
     }
 
-    private void wrtMsgToLogFile(String msg, String username) {
-        try (FileWriter out = new FileWriter("log.txt", true)) {
-            out.write(username + ": " + msg + "\n");
+    private void wrtMsgToLogFile(String msg) {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter("log.txt", true))) {
+            out.write(msg);
+            out.newLine();
             out.flush();
         } catch (IOException e) {
             if (!shownIoErrors) {
@@ -135,6 +159,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
 
     private void putLog(String msg) {
         if ("".equals(msg)) return;
+        wrtMsgToLogFile(msg);
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
